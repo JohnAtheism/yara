@@ -33,7 +33,7 @@
       * The domain is a Cloudflare Workers subdomain and may rotate; pair it
         with the host behavior described in Other/FyreRAT/README.md.
 
-    Author: L702x
+    Author: JohnAtheism
     Date:   2026-11-16
     TLP:    WHITE
 */
@@ -48,7 +48,7 @@ rule FyreRAT_Sample_KnownHash
         stage         = "all"
         confidence    = "high"
         description   = "Exact known samples of the FyreAC -> PaperFix chain"
-        reference     = "https://github.com/L702x/yara/tree/main/Other/FyreRAT"
+        reference     = "https://github.com/JohnAtheism/yara/tree/main/Other/FyreRAT"
         sample_sha256 = "ad6e0d958eb1a8967f1d06536aa4ed98e1970721bd2b5b2dc7cb2e87284da5d6, fb52ed5592921a3f6dae2ad32e9e19874803fe554c2e208d4c5f164f851d511c"
     condition:
         ( filesize == 14877457 and hash.sha256(0, filesize) == "ad6e0d958eb1a8967f1d06536aa4ed98e1970721bd2b5b2dc7cb2e87284da5d6" ) or
@@ -98,6 +98,28 @@ rule FyreRAT_Stage1_Stager_Class
     condition:
         uint32be(0) == 0xCAFEBABE and
         $url and 2 of ($method, $path, $also, $sha)
+}
+
+
+rule FyreRAT_Stage1_Distribution
+{
+    meta:
+        family      = "FyreRAT"
+        stage       = "stage1-distribution"
+        confidence  = "high"
+        description = "Stage-1 manifest payload host and replacement-plugin downloads"
+        reference   = "Other/FyreRAT/manifest.txt"
+        scope_note  = "Also matches the captured manifest and reports that quote these URLs."
+
+    strings:
+        $gitlab  = "gitlab.com/blaher331/nigea" ascii wide nocase
+        $fyreac  = "github.com/fyreac/fyreac/releases/download/67/" ascii wide nocase
+        $luck    = "LuckPerms-Bukkit-5.5.53.jar" ascii wide
+        $voice   = "voicechat-bukkit-2.6.23.jar" ascii wide
+        $tab     = "TAB.v6.1.3.jar" ascii wide
+
+    condition:
+        $gitlab or ( $fyreac and 1 of ($luck, $voice, $tab) )
 }
 
 
@@ -178,12 +200,36 @@ rule FyreRAT_C2_Indicators
         $p1     = "/api/asdfg2asd" ascii wide
         $p2     = "/api/sdf8gusdf3/register" ascii wide
         $p3     = "/api/aguysdfsd89asdfa" ascii wide
+        $p4     = "/api/sasd2" ascii wide
         $state  = ".cache/.srvinfo" ascii wide
         $method = "comparatorsIndirect" ascii wide
 
     condition:
-        ( $domain and 1 of ($p1, $p2, $p3) ) or
-        ( 2 of ($p1, $p2, $p3) ) or
+        ( $domain and 1 of ($p1, $p2, $p3, $p4) ) or
+        ( 2 of ($p1, $p2, $p3, $p4) ) or
         ( $domain and $state ) or
         ( $domain and $method )
+}
+
+
+rule FyreRAT_Web_IPLogger
+{
+    meta:
+        family      = "FyreRAT"
+        stage       = "web"
+        confidence  = "high"
+        description = "fyreac.space IP-logging script that posts visitor IPs to /api/sasd2"
+        reference   = "Other/FyreRAT/script.js"
+        scope_note  = "Matches the captured script and pages that quote its source."
+
+    strings:
+        $ipify   = "api.ipify.org" ascii wide
+        $exfil   = "/api/sasd2" ascii wide
+        $fake1   = "fake1" ascii wide
+        $fake2   = "fake2" ascii wide
+        $opened  = "Opened" ascii wide
+        $downed  = "Downloaded" ascii wide
+
+    condition:
+        $exfil and 2 of ($ipify, $fake1, $fake2, $opened, $downed)
 }
