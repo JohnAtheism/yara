@@ -1,0 +1,56 @@
+# Malware samples and executable artifacts
+# Never commit live samples. Hashes and behavior notes belong in the analysis.
+*.exe
+*.dll
+*.sys
+*.scr
+*.com
+*.msi
+*.jar
+*.war
+*.ear
+*.class
+*.apk
+*.dex
+*.so
+*.dylib
+*.bin
+*.elf
+*.o
+*.obj
+
+# Archives that may contain samples
+*.zip
+*.7z
+*.rar
+*.tar
+*.gz
+*.bz2
+*.xz
+*.cab
+*.iso
+*.img
+*.vhd
+*.vhdx
+
+# Memory / packet captures
+*.pcap
+*.pcapng
+*.mem
+*.dmp
+*.core
+
+# Local analysis output
+extracted/
+out/
+tmp/
+*.log
+__pycache__/
+*.pyc
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
